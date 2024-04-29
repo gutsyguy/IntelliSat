@@ -1,0 +1,24 @@
+{
+    "version": 6,
+    "configurePresets": [
+        {
+            "name": "debug",
+            "displayName": "Debug on Target",
+            "generator": "Unix Makefiles",
+            "binaryDir": "build/debug",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug"
+            },
+            "toolchainFile": "cubeide-gcc.cmake"
+        }
+    ],
+    "buildPresets": [
+        {
+            "name": "debug",
+            "displayName": "Intellisat Debug Build",
+            "configurePreset": "debug",
+            "configuration": "Debug",
+            "targets": ["all"]
+        }
+    ]
+}
