@@ -2,22 +2,44 @@
     "version": 6,
     "configurePresets": [
         {
-            "name": "debug",
-            "displayName": "Debug on Target",
+            "name": "common",
+            "hidden": true,
             "generator": "Unix Makefiles",
-            "binaryDir": "build/debug",
+            "binaryDir": "build/${presetName}"
+        },
+        {
+            "name": "debug",
+            "displayName": "Debug build for an Orbital Platform",
+            "inherits": "common",
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Debug"
             },
             "toolchainFile": "cubeide-gcc.cmake"
+        },
+        {
+            "name": "debug_pc",
+            "displayName": "Debug build for a computer",
+            "inherits": "common",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug"
+            }
         }
     ],
     "buildPresets": [
         {
             "name": "debug",
-            "displayName": "Intellisat Debug Build",
+            "displayName": "Intellisat Debug Build for Orbital Platform",
             "configurePreset": "debug",
             "configuration": "Debug",
+            "jobs": 6,
+            "targets": ["all"]
+        },
+        {
+            "name": "debug_pc",
+            "displayName": "Intellisat Debug Build for PC",
+            "configurePreset": "debug_pc",
+            "configuration": "Debug",
+            "jobs": 6,
             "targets": ["all"]
         }
     ]

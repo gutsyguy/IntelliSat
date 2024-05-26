@@ -22,9 +22,10 @@ set (RUNTIME_LIBRARY_SYSCALLS "--specs=nosys.specs")
 # Skip link step during toolchain validation.
 set(CMAKE_TRY_COMPILE_TARGET_TYPE STATIC_LIBRARY)
 
-# Specify toolchain. NOTE When building from inside STM32CubeIDE the location of the toolchain is resolved by the "MCU Toolchain" project setting (via PATH).  
-set(TOOLCHAIN_PREFIX   "arm-none-eabi-")
-# set(TOOLCHAIN_PREFIX   "/opt/st/stm32cubeide_1.12.1/plugins/com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.10.3-2021.10.linux64_1.0.200.202301161003/tools/bin/arm-none-eabi-")
+# Specify toolchain. NOTE When building from inside STM32CubeIDE the location of the
+# toolchain is resolved by the "MCU Toolchain" project setting (via PATH).
+# set(TOOLCHAIN_PREFIX   "arm-none-eabi-")
+set(TOOLCHAIN_PREFIX   "/opt/st/stm32cubeide_1.13.1/plugins/com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.11.3.rel1.linux64_1.1.0.202305231506/tools/bin/arm-none-eabi-")
 
 set(CMAKE_C_COMPILER   "${TOOLCHAIN_PREFIX}gcc")
 set(CMAKE_ASM_COMPILER "${TOOLCHAIN_PREFIX}gcc")
