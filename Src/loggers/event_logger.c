@@ -1,6 +1,8 @@
 #include "event_logger.h"
-#include "mockup_flash/logger_to_flash.h"
+#include "logger_to_flash.h"
 #include "fits_in_bits.h"
+
+#include "downlink_logs.h"
 
 #include <stdio.h>
 #include <stdint.h>
@@ -15,7 +17,8 @@ struct LocalEventLogs local_event_logs = {
 
 // TODO: log overflows
 void handle_event_overflow() {
-    LOGGER_push_event_logs_to_flash(&local_event_logs);
+//    LOGGER_push_event_logs_to_flash();
+    LOGGER_downlink_event_logs();
 }
 
 uint8_t build_and_add_event_log(
@@ -33,7 +36,7 @@ uint8_t build_and_add_event_log(
         || !fits_in_bits(extra, 11)
     ) {
         // Gave too large a value somewhere :(
-        printf("Improper value\n");
+        // printf("Improper value\n");
         return 1;
     }
 

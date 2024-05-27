@@ -1,20 +1,20 @@
 #include "experiment_logger.h"
-#include "mockup_flash/logger_to_flash.h"
-#include "fits_in_bits.h"
+#include "logger_to_flash.h"
+#include "downlink_logs.h"
+
+#include "downlink_logs.h"
+
+// #include "../tools/print_scan.h"
+//#define printMsg(x) printf(x)
 
 #include <stdint.h>
 #include <stdio.h>
-#include <stdbool.h>
+//#include <stdbool.h>
 #include <string.h>
 #include <assert.h>
 
-// Small buffer that represents log storage on the MCU
-// #define LOCAL_EXP_LOG_BUFFER_SIZE (2 * 32)
-
-// TODO: turn this into a pointer to one of the two local logging structs
-// Use this pointer when needed
-// swap what it points to on local log overflow
 static struct LocalExpLogs LOGGER_local_exp_logs = {
+    .paused = true,
     .num_logs = LOCAL_EXP_LOG_COUNT,
     .tail = 0,
     .logs = {{0, 0, 0, 0, 0, 0, 0, 0}}
@@ -22,8 +22,23 @@ static struct LocalExpLogs LOGGER_local_exp_logs = {
 
 static struct ExperimentLogHeader * LOGGER_current_exp_header;
 
+#ifdef NO_OP
+//#include <stdbool.h>
+#else
+#include <Timers/timers.h>
+#include <globals.h>
+#endif
+
+static void LOGGER_log_current_exp();
+
+void LOGGER_exp_logger_init() {
+	logger_initExpTimer();
+	logger_registerLogFunction(LOGGER_log_current_exp);
+}
+
 // TODO: figure out what to set up when starting logging
 void LOGGER_start_exp_logging() {
+
     int current_exp = FLASH_header.current_exp_num;
 
     if(current_exp > EXP2) {
@@ -40,10 +55,14 @@ void LOGGER_start_exp_logging() {
             break;
         }
     }
+
+    LOGGER_local_exp_logs.paused = false;
+    logger_expTimerOn();
 }
 
 // TODO: Save experiment status to flash header
 void LOGGER_stop_exp_logging(int experiment_status) {
+	logger_expTimerOff();
 
     LOGGER_current_exp_header->exit_status = experiment_status;
     int current_exp = FLASH_header.current_exp_num + 1;
@@ -53,13 +72,20 @@ void LOGGER_stop_exp_logging(int experiment_status) {
     }
     
     FLASH_header.current_exp_num = current_exp;
-    LOGGER_update_header();
+//    LOGGER_update_header();
 }
 
 // TODO: swap out the local buffer used for local logging on overflow
 static void LOGGER_handle_exp_overflow() {
-    printf("moving exp logs\n");
-   LOGGER_push_exp_logs_to_flash(&LOGGER_local_exp_logs, LOGGER_current_exp_header);
+    LOGGER_local_exp_logs.paused = true;
+
+    printf("Moving Experiment Logs\r\n");
+    LOGGER_downlink_exp_logs(&LOGGER_local_exp_logs);
+
+    // TODO: Should unpausing go into an interrupt handler for comms (0.5) or flash (1.0)?
+    LOGGER_local_exp_logs.paused = false;
+//    LOGGER_push_exp_logs_to_flash(&LOGGER_local_exp_logs, LOGGER_current_exp_header);
+
 }
 
 /**
@@ -67,37 +93,53 @@ static void LOGGER_handle_exp_overflow() {
  * Checks that the fields fit in the bitfields
  * Might just be useful for testing
  */
-uint8_t LOGGER_log_exp(
-    unsigned int rtc_time,     // Date+Hr+Min+Sec
+static uint8_t LOGGER_log_exp(
+    uint16_t exp_num,
+    uint16_t rtc_time,     // Date+Hr+Min+Sec
+
     int16_t  gyro_x,
     int16_t  gyro_y,
     int16_t  gyro_z,
-    int16_t  dgyro_x,
-    int16_t  dgyro_y,
-    int16_t  dgyro_z,
-    unsigned int extra
-) {
 
-    if (   !fits_in_bits(rtc_time, 12)
-        || !fits_in_bits(extra, 11)
-    ) {
-        // Gave too large a value somewhere :(
+    int16_t mag_x,
+    int16_t mag_y,
+    int16_t mag_z,
+
+    int16_t sunsensor_1,
+    int16_t sunsensor_2,
+    int16_t sunsensor_3,
+    int16_t sunsensor_4,
+    int16_t sunsensor_5,
+    int16_t sunsensor_6,
+
+    uint8_t extra
+) {
+    if(LOGGER_local_exp_logs.paused) {
         return 1;
     }
 
+
     uint64_t current_log_index = LOGGER_local_exp_logs.tail;
 
-	// Current overflow policy - Just overwrite oldest log
-	// TODO: Put into separate function - detect_exp_buff_overflow()
-	// Simplest is probably just pass the buffer and have it return next index to insert at?
 
+	LOGGER_local_exp_logs.logs[current_log_index].exp_num = exp_num;
 	LOGGER_local_exp_logs.logs[current_log_index].rtc_time = rtc_time;
+
     LOGGER_local_exp_logs.logs[current_log_index].gyro_x = gyro_x;
     LOGGER_local_exp_logs.logs[current_log_index].gyro_y = gyro_y;
     LOGGER_local_exp_logs.logs[current_log_index].gyro_z = gyro_z;
-    LOGGER_local_exp_logs.logs[current_log_index].dgyro_x = dgyro_x;
-    LOGGER_local_exp_logs.logs[current_log_index].dgyro_y = dgyro_y;
-    LOGGER_local_exp_logs.logs[current_log_index].dgyro_z = dgyro_z;
+
+    LOGGER_local_exp_logs.logs[current_log_index].mag_x = mag_x;
+    LOGGER_local_exp_logs.logs[current_log_index].mag_y = mag_y;
+    LOGGER_local_exp_logs.logs[current_log_index].mag_z = mag_z;
+
+    LOGGER_local_exp_logs.logs[current_log_index].sunsensor_1 = sunsensor_1;
+    LOGGER_local_exp_logs.logs[current_log_index].sunsensor_2 = sunsensor_2;
+    LOGGER_local_exp_logs.logs[current_log_index].sunsensor_3 = sunsensor_3;
+    LOGGER_local_exp_logs.logs[current_log_index].sunsensor_4 = sunsensor_4;
+    LOGGER_local_exp_logs.logs[current_log_index].sunsensor_5 = sunsensor_5;
+    LOGGER_local_exp_logs.logs[current_log_index].sunsensor_6 = sunsensor_6;
+    
     LOGGER_local_exp_logs.logs[current_log_index].extra = extra;
 
     current_log_index++;
@@ -110,6 +152,12 @@ uint8_t LOGGER_log_exp(
         LOGGER_local_exp_logs.tail = current_log_index;
     }
     return 0;
+}
+
+static void LOGGER_log_current_exp() {
+	static uint8_t counter = 0;
+	LOGGER_log_exp(counter, counter, counter, counter, counter, counter, counter, counter, counter, counter, counter, counter, counter, counter, counter);
+	++counter;
 }
 
 // Function for adding an experiment log using bitwise operations. This may be the way we have to move forward

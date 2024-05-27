@@ -1,8 +1,8 @@
 #ifndef MOCKUP_FLASH_FLASH_H_
 #define MOCKUP_FLASH_FLASH_H_
 
-#include "../event_logger.h"
-#include "../experiment_logger.h"
+#include "event_logger.h"
+#include "experiment_logger.h"
 
 #include <stdint.h>
 
