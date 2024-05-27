@@ -74,6 +74,9 @@ void rtc_config(char clock_source, int forced_config);
  */
 void rtc_writeToBKPNumber(uint32_t bits, uint32_t bkp);
 
+void rtc_openWritingPriveledge();
+void rtc_closeWritingPriveledge();
+
 /****************************** RTC TIME SETTERS *****************************/
 
 /**

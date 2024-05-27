@@ -22,6 +22,8 @@ file(GLOB_RECURSE SYS Src/sys/*.c)
 file(GLOB_RECURSE SYSTEM_CONFIG Src/system_config/*.c)
 file(GLOB_RECURSE TOOLS Src/tools/*.c)
 
+message(${SYSTEM_CONFIG})
+
 set (PROJECT_SOURCES
   # LIST SOURCE FILES HERE
   Startup/startup_stm32l476zgtx.s
@@ -44,12 +46,25 @@ set (PROJECT_DEFINES
 )
 
 set (PROJECT_INCLUDES
-  Src
+  Src/inc
   Drivers/Device
+  Src/system_config/Buttons
+  Src/system_config/GPIO
+  Src/system_config/I2C
+  Src/system_config/LED
+  Src/system_config/QSPI
+  Src/system_config/RTC
+  Src/system_config/SPI
+  Src/system_config/Timers
+  Src/system_config/UART
+  Src/system_config/Buttons
+  Src/system_config/Buttons
+  Src/system_config/Buttons
+
 )
 
 ################## PROJECT SETUP ######################################
-project(${PROJECT_NAME})
+project(${PROJECT_NAME} C)
 enable_language(ASM)
 
 add_compile_definitions (${PROJECT_DEFINES})
